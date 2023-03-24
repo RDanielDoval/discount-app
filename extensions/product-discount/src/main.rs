@@ -16,17 +16,17 @@ struct Config {
 
 #[shopify_function]
 fn function(input: input::ResponseData) -> Result<output::FunctionResult> {
-    let config: Config = input
-        .discount_node
-        .metafield
-        .as_ref()
-        .map(|m| serde_json::from_str::<Config>(m.value.as_str()))
-        .transpose()?
-        .unwrap_or_default();
+    // let config: Config = input
+    //     .discount_node
+    //     .metafield
+    //     .as_ref()
+    //     .map(|m| serde_json::from_str::<Config>(m.value.as_str()))
+    //     .transpose()?
+    //     .unwrap_or_default();
 
     let cart_lines = input.cart.lines;
 
-    if cart_lines.is_empty() || config.percentage == 0.0 {
+    if cart_lines.is_empty() {
         return Ok(output::FunctionResult {
             discount_application_strategy: output::DiscountApplicationStrategy::FIRST,
             discounts: vec![],
@@ -35,17 +35,15 @@ fn function(input: input::ResponseData) -> Result<output::FunctionResult> {
 
     let mut targets = vec![];
     for line in cart_lines {
-        if line.quantity >= config.quantity {
-            targets.push(output::Target {
-                product_variant: Some(output::ProductVariantTarget {
-                    id: match line.merchandise {
-                        input::InputCartLinesMerchandise::ProductVariant(variant) => variant.id,
-                        _ => continue,
-                    },
-                    quantity: None,
-                }),
-            });
-        }
+        targets.push(output::Target {
+            product_variant: Some(output::ProductVariantTarget {
+                id: match line.merchandise {
+                    input::InputCartLinesMerchandise::ProductVariant(variant) => variant.id,
+                    _ => continue,
+                },
+                quantity: None,
+            }),
+        });
     }
 
     if targets.is_empty() {
@@ -57,11 +55,11 @@ fn function(input: input::ResponseData) -> Result<output::FunctionResult> {
 
     Ok(output::FunctionResult {
         discounts: vec![output::Discount {
-            message: None,
+            message: Some("aaaaaaaa".to_string()),
             targets,
             value: output::Value {
                 percentage: Some(output::Percentage {
-                    value: config.percentage.to_string(),
+                    value: "10".to_string(),
                 }),
                 fixed_amount: None,
             },
