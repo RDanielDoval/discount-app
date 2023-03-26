@@ -7,7 +7,9 @@ fn test_result_contains_no_discounts() -> Result<()> {
         function,
         r#"
             {
-                
+                "discountNode": {
+                    "metafield": null
+                }
             }
         "#,
     )?;

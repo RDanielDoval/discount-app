@@ -56,6 +56,15 @@ export function ProductsCard() {
         title="Product Counter"
         sectioned
         primaryFooterAction={{
+          content: "Discount",
+          onAction: handlePopulate,
+          loading: isLoading,
+        }}
+      />
+      <Card
+        title="Product Counter"
+        sectioned
+        primaryFooterAction={{
           content: "Populate 5 products",
           onAction: handlePopulate,
           loading: isLoading,

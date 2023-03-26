@@ -1,10 +1,10 @@
-name = "product-discount"
+name = "product-discount2"
 type = "product_discounts"
 api_version = "2023-01"
 
 [build]
 command = "cargo wasi build --release"
-path = "target/wasm32-wasi/release/product-discount.wasm"
+path = "target/wasm32-wasi/release/product-discount2.wasm"
 
 [ui.paths]
 create = "/"
