@@ -17,14 +17,15 @@ fn function(input: input::ResponseData) -> Result<output::FunctionResult> {
     // Iterate all the lines in the cart to create discount targets
     let targets = input.cart.lines
         .iter()
-        // Only include cart lines with a quantity higher than two
-        .filter(|line| line.quantity >= 2)
+        // // Only include cart lines with a quantity higher than two
+        // .filter(|line| line.quantity >= 2)
         // Only include cart lines with a targetable product variant
         .filter_map(|line| match &line.merchandise {
             input::InputCartLinesMerchandise::ProductVariant(variant) => Some(variant),
             input::InputCartLinesMerchandise::CustomProduct => None,
         })
         // Use the variant ID to create a discount target
+        .filter(|variant| variant.product.has_any_tag)
         .map(|variant| output::Target {
             product_variant: Some(output::ProductVariantTarget {
                 id: variant.id.to_string(),

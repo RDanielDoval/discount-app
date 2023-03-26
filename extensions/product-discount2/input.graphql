@@ -1,11 +1,34 @@
+# query Input {
+#   cart {
+#     lines {
+#       quantity
+#       merchandise {
+#         __typename
+#         ...on ProductVariant {
+#             id
+#         }
+#       }
+#     }
+#   }
+# }
+
 query Input {
   cart {
     lines {
-      quantity
+      id,
+      quantity,
+      cost {
+        totalAmount {
+          amount
+        }
+      }
       merchandise {
         __typename
         ...on ProductVariant {
-            id
+          id,
+          product {
+            hasAnyTag(tags: ["RKI:17.00", "RKI:15.00"])
+          }
         }
       }
     }

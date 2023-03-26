@@ -24,7 +24,7 @@ type Attribute {
 }
 
 """
-Represents information about the buyer that is interacting with the cart.
+Represents information about the buyer that is interacting with the cart. Only set when the buyer is logged in.
 """
 type BuyerIdentity {
   """
