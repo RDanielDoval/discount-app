@@ -6,6 +6,7 @@ generate_types!(
     query_path = "./input.graphql",
     schema_path = "./schema.graphql"
 );
+
 // Use the shopify_function crate to declare your function entrypoint
 #[shopify_function]
 fn function(input: input::ResponseData) -> Result<output::FunctionResult> {
@@ -14,47 +15,86 @@ fn function(input: input::ResponseData) -> Result<output::FunctionResult> {
         discount_application_strategy: output::DiscountApplicationStrategy::FIRST,
     };
 
-    // Iterate all the lines in the cart to create discount targets
-    let targets = input.cart.lines
-        .iter()
-        // // Only include cart lines with a quantity higher than two
-        // .filter(|line| line.quantity >= 2)
-        // Only include cart lines with a targetable product variant
-        .filter_map(|line| match &line.merchandise {
-            input::InputCartLinesMerchandise::ProductVariant(variant) => Some(variant),
-            input::InputCartLinesMerchandise::CustomProduct => None,
-        })
-        // Use the variant ID to create a discount target
-        .filter(|variant| variant.product.has_any_tag)
-        .map(|variant| output::Target {
-            product_variant: Some(output::ProductVariantTarget {
-                id: variant.id.to_string(),
-                quantity: None,
-            })
-        })
-        .collect::<Vec<output::Target>>();
+    let cart_lines = input.cart.lines;
 
-    if targets.is_empty() {
-        // You can use STDERR for debug logs in your function
-        eprintln!("No cart lines qualify for volume discount.");
+    if cart_lines.is_empty() {
         return Ok(no_discount);
     }
 
-    // The shopify_function crate serializes your function result and writes it to STDOUT
-    Ok(output::FunctionResult {
-        discounts: vec![output::Discount {
-            message: Some("ReKeepIt".to_string()),
+    let mut send_discounts = vec![];
+    let zero_amount = &String::from("0.0");
+    let products = cart_lines.iter()
+        .filter_map(|line| match &line.merchandise {
+            input::InputCartLinesMerchandise::ProductVariant(variant) => Some(variant),
+            input::InputCartLinesMerchandise::CustomProduct => None,
+        });
+    let mut targets_15 =  vec![];
+    let mut targets_17 =  vec![];
+    for variant in products {
+        if variant.product.has_any_tag {
+            let fixed_amount = match &variant.product.metafield {
+                Some(meta) => &meta.value,
+                None => zero_amount,
+            };
+            if fixed_amount == "17.0" {
+                targets_17.push(output::Target {
+                    product_variant: Some(output::ProductVariantTarget {
+                        id: variant.id.to_string(),
+                        quantity: None,
+                    })
+                });
+            } else {
+                targets_15.push(output::Target {
+                    product_variant: Some(output::ProductVariantTarget {
+                        id: variant.id.to_string(),
+                        quantity: None,
+                    })
+                });
+            }
+        }
+    }
+
+    if targets_15.is_empty() && targets_17.is_empty() {
+        return Ok(no_discount);
+    }
+
+    if !targets_15.is_empty() {
+        send_discounts.push(output::Discount {
+            message: Some("ReKeepIt15".to_string()),
             // Apply the discount to the collected targets
-            targets,
+            targets: targets_15,
             // Define a percentage-based discount
             value: output::Value {
-                fixed_amount: None,
-                percentage: Some(output::Percentage {
-                    value: "20.0".to_string()
-                })
+                fixed_amount: Some(output::FixedAmount {
+                    amount: "15.0".to_string(),
+                    applies_to_each_item: Some(true)
+                }),
+                percentage: None
             }
-        }],
-        discount_application_strategy: output::DiscountApplicationStrategy::FIRST,
+        });
+    }    
+    
+    if !targets_17.is_empty() {
+        send_discounts.push(output::Discount {
+            message: Some("ReKeepIt17".to_string()),
+            // Apply the discount to the collected targets
+            targets: targets_17,
+            // Define a percentage-based discount
+            value: output::Value {
+                fixed_amount: Some(output::FixedAmount {
+                    amount: "17.0".to_string(),
+                    applies_to_each_item: Some(true)
+                }),
+                percentage: None
+            }
+        });
+    }
+
+
+    // The shopify_function crate serializes your function result and writes it to STDOUT
+    Ok(output::FunctionResult {
+        discounts: send_discounts,
+        discount_application_strategy: output::DiscountApplicationStrategy::MAXIMUM,
     })
 }
 #[cfg(test)]

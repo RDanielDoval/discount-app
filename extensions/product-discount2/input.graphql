@@ -27,7 +27,10 @@ query Input {
         ...on ProductVariant {
           id,
           product {
-            hasAnyTag(tags: ["RKI:17.00", "RKI:15.00"])
+            hasAnyTag(tags: ["RKI:17.00", "RKI:15.00"]),
+            metafield(namespace: "custom", key: "rki_tag_value") {
+               value
+            }
           }
         }
       }
